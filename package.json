@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@types/node": "^14.14.2",
-    "esbuild": "^0.18.10",
+    "esbuild": "^0.25.2",
     "obsidian": "^1.4.4",
     "prettier": "^3.2.4",
     "standard-version": "^9.0.0",
