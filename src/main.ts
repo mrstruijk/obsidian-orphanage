@@ -200,7 +200,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                 if (
                     (cache.frontmatterPosition ?? frontmatter.position).end
                         .line ==
-                    lines - 1
+                        lines - 1
                 ) {
                     emptyFiles.push(file);
                 }
@@ -208,10 +208,10 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         }
         let prefix: string;
         if (this.settings.disableWorkingLinks) prefix = "	";
-        else prefix = "";
+            else prefix = "";
         const text = emptyFiles
-            .map((file) => `${prefix}- [[${file.path}]]`)
-            .join("\n");
+        .map((file) => `${prefix}- [[${file.path}]]`)
+        .join("\n");
         Utils.writeAndOpenFile(
             this.app,
             this.settings.emptyFilesOutputFileName + ".md",
@@ -250,7 +250,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                         let match;
                         while (
                             (match = findLinkInTextRegex.exec(node.text)) !==
-                            null
+                                null
                         ) {
                             linkTexts.push(match[1] ?? match[2]);
                         }
@@ -260,10 +260,10 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 
                     linkTexts.forEach((linkText: string) => {
                         const targetFile =
-                            this.app.metadataCache.getFirstLinkpathDest(
-                                linkText.split("|")[0].split("#")[0],
-                                canvasFile.path
-                            );
+                        this.app.metadataCache.getFirstLinkpathDest(
+                            linkText.split("|")[0].split("#")[0],
+                            canvasFile.path
+                        );
                         if (targetFile != null) links.add(targetFile.path);
                     });
                 });
@@ -301,13 +301,13 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         let text = "";
         let prefix: string;
         if (this.settings.disableWorkingLinks) prefix = "	";
-        else prefix = "";
+            else prefix = "";
 
         notLinkedFiles.sort((a, b) => b.stat.size - a.stat.size);
 
         notLinkedFiles.forEach((file) => {
             text +=
-                prefix +
+            prefix +
                 "- [[" +
                 this.app.metadataCache.fileToLinktext(file, "/", false) +
                 "]]\n";
@@ -351,7 +351,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 
             if (
                 this.settings.fileTypesToDelete[0] == "*" ||
-                this.settings.fileTypesToDelete.contains(file.extension)
+                    this.settings.fileTypesToDelete.contains(file.extension)
             ) {
                 filesToDelete.push(file);
             }
@@ -397,7 +397,7 @@ export default class FindOrphanedFilesPlugin extends Plugin {
         for (const sourceFilepath in brokenLinks) {
             if (
                 sourceFilepath ==
-                this.settings.unresolvedLinksOutputFileName + ".md"
+                    this.settings.unresolvedLinksOutputFileName + ".md"
             )
                 continue;
 
@@ -486,10 +486,10 @@ export default class FindOrphanedFilesPlugin extends Plugin {
 
         let prefix: string;
         if (this.settings.disableWorkingLinks) prefix = "	";
-        else prefix = "";
+            else prefix = "";
         const text = withoutFiles
-            .map((file) => `${prefix}- [[${file.path}]]`)
-            .join("\n");
+        .map((file) => `${prefix}- [[${file.path}]]`)
+        .join("\n");
         Utils.writeAndOpenFile(
             this.app,
             outFileName,
@@ -499,13 +499,43 @@ export default class FindOrphanedFilesPlugin extends Plugin {
     }
 
     /**
-     * Checks if the given file in an orphaned file
-     *
-     * @param file file to check
-     * @param links all links in the vault
-     */
+ * Checks if the given file in an orphaned file
+ *
+ * @param file file to check
+ * @param links all incoming links in the vault
+ */
     isFileAnOrphan(file: TFile, links: Set<string>, dir: string): boolean {
+        // If the file has incoming links, it's not an orphan
         if (links.has(file.path)) return false;
+
+        // Check if the file has outgoing links
+        if (file.extension === "md") {
+            const cache = this.app.metadataCache.getFileCache(file);
+            const hasOutgoingLinks = Boolean(
+                (cache?.links?.length || 0) > 0 || 
+                    (cache?.embeds?.length || 0) > 0 || 
+                    (cache?.frontmatterLinks?.length || 0) > 0
+            );
+
+            // If it has outgoing links, it's not an orphan
+            if (hasOutgoingLinks) return false;
+        } else if (file.extension === "canvas") {
+            // For canvas files, we'd need to read the file content to check for outgoing links
+            // This is a placeholder - we would implement similar logic to what's in findOrphanedFiles
+            // to analyze canvas files for outgoing links
+            try {
+                const canvasData = JSON.parse(this.app.vault.cachedRead(file) || "{}");
+                const hasOutgoingLinks = Boolean(
+                    canvasData.nodes?.some(node => 
+                        (node.type === "file" && node.file) || 
+                            (node.type === "text" && /\[\[(.*?)\]\]|\[.*?\]\((.*?)\)/.test(node.text))
+                    )
+                );
+                if (hasOutgoingLinks) return false;
+            } catch (e) {
+                console.error(`Error checking outgoing links in canvas file ${file.path}:`, e);
+            }
+        }
 
         //filetypes to ignore by default
         if (file.extension == "css") return false;
@@ -515,9 +545,9 @@ export default class FindOrphanedFilesPlugin extends Plugin {
                 file.extension
             );
             if (this.settings.ignoreFileTypes) {
-                if (containsFileType) return;
+                if (containsFileType) return false;
             } else {
-                if (!containsFileType) return;
+                if (!containsFileType) return false;
             }
         }
 
