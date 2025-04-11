@@ -5,7 +5,7 @@ A Plugin for [Obsidian](https://obsidian.md)
 
 ### Find orphaned files
 
-This plugin goes through your whole vault and searches for files, which are linked nowhere. In other words: Files with no backlinks.
+This plugin goes through your whole vault and searches for files, which are linked nowhere. In other words: _Files with neither backlinks nor outgoing links_
 
 In the end, it will create a file with a list of links to these orphaned files. Now you can either delete these unused files or link them somewhere in your vault.
 
